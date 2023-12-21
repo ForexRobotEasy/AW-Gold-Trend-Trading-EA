@@ -1,0 +1,142 @@
+mql5
+//+------------------------------------------------------------------+
+//|                                      AW Gold Trend Trading EA    |
+//|                                              forexroboteasy.com |
+//|                                      Developed by Forex Robot Easy Team |
+//+------------------------------------------------------------------+
+
+#include <Expert\MQL4\MQL5\Include\Trade\Trade.mqh>
+
+// Define the necessary parameters
+input double LotSize = 0.01;
+input int StopLoss = 100;
+input int TakeProfit = 200;
+input int TrendPeriod = 14;
+input int OscillatorPeriod = 9;
+input bool TradeLong = true;
+input bool TradeShort = true;
+
+//+------------------------------------------------------------------+
+//| Custom indicator functions                                       |
+//+------------------------------------------------------------------+
+
+// Function to determine trend based on oscillator
+bool IsTrendUp(double oscillator[])
+{
+    double sum = 0;
+    for(int i = 0; i < TrendPeriod; i++)
+    {
+        sum += oscillator[i];
+    }
+    double average = sum / TrendPeriod;
+    return oscillator[0] > average;
+}
+
+bool IsTrendDown(double oscillator[])
+{
+    double sum = 0;
+    for(int i = 0; i < TrendPeriod; i++)
+    {
+        sum += oscillator[i];
+    }
+    double average = sum / TrendPeriod;
+    return oscillator[0] < average;
+}
+
+//+------------------------------------------------------------------+
+//| Expert advisor initialization function                           |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    // Add initialization logic if needed
+    return INIT_SUCCEEDED;
+}
+
+//+------------------------------------------------------------------+
+//| Expert advisor start function                                     |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+    // Define trading variables
+    double oscillator[];
+    double stopLossLevel;
+    double takeProfitLevel;
+
+    // Get oscillator values
+    ArraySetAsSeries(oscillator, true);
+    CopyBuffer(0, 0, 0, TrendPeriod, oscillator);
+
+    // Check trend and open orders accordingly
+    if (IsTrendUp(oscillator) && TradeLong)
+    {
+        stopLossLevel = Ask - StopLoss * _Point;
+        takeProfitLevel = Ask + TakeProfit * _Point;
+
+        if (!IsTradeContextBusy())
+        {
+            trade.Buy(LotSize, NULL, stopLossLevel, takeProfitLevel, NULL);
+        }
+    }
+
+    if (IsTrendDown(oscillator) && TradeShort)
+    {
+        stopLossLevel = Bid + StopLoss * _Point;
+        takeProfitLevel = Bid - TakeProfit * _Point;
+
+        if (!IsTradeContextBusy())
+        {
+            trade.Sell(LotSize, NULL, stopLossLevel, takeProfitLevel, NULL);
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Expert advisor deinitialization function                         |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+    // Add deinitialization logic if needed
+}
+
+//+------------------------------------------------------------------+
+//| Expert advisor custom functions                                  |
+//+------------------------------------------------------------------+
+
+// Function to add manual orders
+void AddManualOrder(double lotSize, double stopLoss, double takeProfit, bool isBuy)
+{
+    if (isBuy)
+    {
+        double stopLossLevel = Ask - stopLoss * _Point;
+        double takeProfitLevel = Ask + takeProfit * _Point;
+
+        if (!IsTradeContextBusy())
+        {
+            trade.Buy(lotSize, NULL, stopLossLevel, takeProfitLevel, NULL);
+        }
+    }
+    else
+    {
+        double stopLossLevel = Bid + stopLoss * _Point;
+        double takeProfitLevel = Bid - takeProfit * _Point;
+
+        if (!IsTradeContextBusy())
+        {
+            trade.Sell(lotSize, NULL, stopLossLevel, takeProfitLevel, NULL);
+        }
+    }
+}
+
+// Function to adjust overlap recovery algorithm
+void AdjustOverlapRecoveryAlgorithm(int newOverlap)
+{
+    // Add logic to adjust overlap recovery algorithm
+}
+
+// Function to manage positions when moving in the opposite direction
+void ManagePositionsOppositeDirection()
+{
+    // Add logic to manage positions when moving in the opposite direction
+}
+
+//+------------------------------------------------------------------+
